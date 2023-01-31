@@ -3,12 +3,13 @@ const { createAudioResource, StreamType, createAudioPlayer, joinVoiceChannel } =
 const play_dl = require('play-dl')
 
 module.exports = {
-    data: new SlashCommandBuilder().setName("play").setDescription("Plays a music"),
+    data: new SlashCommandBuilder().setName("play").setDescription("Plays a music").addStringOption(option => option.setName('query').setRequired(true)),
     async executeInteraction(interaction, client) {
         try {
             const guild = client.guilds.cache.get(interaction.guildId)
             const member = guild.members.cache.get(interaction.member.user.id);
             const voiceChannel = member.voice.channel;
+            console.log(interaction.options.getString('query'));
             this.play(client, interaction.guildId, voiceChannel)
         } catch (error) {
             console.error(error);
