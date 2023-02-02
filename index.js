@@ -2,6 +2,10 @@ require('dotenv').config();
 const { Client, GatewayIntentBits, REST, Routes } = require('discord.js');
 const database = require("./utils/database.js")
 const fs = require('node:fs');
+const { DisTube } = require('distube')
+const { SpotifyPlugin } = require('@distube/spotify')
+const { SoundCloudPlugin } = require('@distube/soundcloud')
+const { YtDlpPlugin } = require('@distube/yt-dlp')
 
 const client = new Client({
     intents: [ 
@@ -14,6 +18,33 @@ const client = new Client({
         GatewayIntentBits.GuildVoiceStates,
     ]
 });
+
+client.distube = new DisTube(client, {
+    leaveOnStop: false,
+    emitNewSongOnly: true,
+    emitAddSongWhenCreatingQueue: true,
+    emitAddListWhenCreatingQueue: false,
+    plugins: [
+        new SpotifyPlugin({
+            emitEventsAfterFetching: true
+        }),
+        new SoundCloudPlugin(),
+        new YtDlpPlugin()
+    ]
+})
+
+client.distube.on('addSong', (queue, song) =>
+		queue.textChannel?.send(
+			`Added ${song.name} - \`${song.formattedDuration}\` to the queue by ${song.user}`,
+		),
+	)
+	.on('addList', (queue, playlist) =>
+		queue.textChannel?.send(
+			`Added \`${playlist.name}\` playlist (${
+				playlist.songs.length
+			} songs) to queue\n${status(queue)}`,
+		),
+	)
 
 client.commands = new Map();
 client.player = new Map();
@@ -36,6 +67,11 @@ const rest = new REST({ version: '10' }).setToken(process.env.DISCORD_TOKEN);
 
 client.on('interactionCreate', async (interaction) => {
     if(!interaction.isChatInputCommand()) return;
+    if (!client.settings[interaction.guildId]) {
+        client.settings[interaction.guildId] = await database.getSettings(message.guild.id)
+        client.settings[interaction.guildId].prefix = "."
+    }
+
     const command = interaction.client.commands.get(interaction.commandName);
 
     if (!command) {
@@ -81,14 +117,16 @@ client.on('messageCreate', async (message) => {
     try {
         var args = [];
         if (message.author.bot) return;
-        if (!client.settings) client.settings = {}
-        client.settings[message.guild.id] = await database.getSettings(message.guild.id)
-        client.settings[message.guild.id].prefix = "."
-        if (!message.content.startsWith(client.settings[message.guild.id].prefix) && !message.mentions.has(client.user)) return;
+        if (!client.settings[message.guildId]) {
+            client.settings[message.guildId] = await database.getSettings(message.guildId)
+            //client.settings[message.guildId].prefix = "."
+        }
+        console.log(client.settings[message.guildId])
+        if (!message.content.startsWith(client.settings[message.guildId].prefix) && !message.mentions.has(client.user)) return;
         if (message.mentions.has(client.user)) {
             args = message.content.split(" ");
             args.shift();
-        } else args = message.content.substring(client.settings[message.guild.id].prefix.length).split(" ");
+        } else args = message.content.substring(client.settings[message.guildId].prefix.length).split(" ");
         let command = client.commands.get(args.shift());
         if (command) await command.execute(message, args, client);
     } catch (err) {
