@@ -68,7 +68,7 @@ const rest = new REST({ version: '10' }).setToken(process.env.DISCORD_TOKEN);
 client.on('interactionCreate', async (interaction) => {
     if(!interaction.isChatInputCommand()) return;
     if (!client.settings[interaction.guildId]) {
-        client.settings[interaction.guildId] = await database.getSettings(message.guild.id)
+        client.settings[interaction.guildId] = await database.getSettings(interaction.guildId)
         client.settings[interaction.guildId].prefix = "."
     }
 
