@@ -27,6 +27,8 @@ module.exports = {
     },
     async play(client, guildId, voiceChannel, search) {
         if(!client.player.get(guildId)) client.player.set(guildId, createAudioPlayer());
-        client.distube.play(voiceChannel, search);
+        client.distube.play(voiceChannel, search).catch(err => {
+			message.reply(err.message);
+		});;
     }
 }
