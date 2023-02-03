@@ -9,7 +9,6 @@ module.exports = {
             const member = guild.members.cache.get(interaction.member.user.id);
             const voiceChannel = member.voice.channel;
             this.play(client, interaction.guildId, voiceChannel, interaction.options.getString('query'));
-            interaction.reply("Added song to queue");
         } catch (error) {
             console.error(error);
         }
@@ -20,7 +19,6 @@ module.exports = {
             const member = guild.members.cache.get(message.author.id);
             const voiceChannel = member.voice.channel;
             this.play(client, message.guildId, voiceChannel, args.join(' '))
-            message.channel.send("Added song to queue");
         } catch (error) {
             console.error(error);
         }
